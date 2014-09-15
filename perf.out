@@ -1,0 +1,144 @@
+Keyword branch:
+
+lein perforate                                                        !1535
+======================
+Reflection warning, perforate/core.clj:13:8 - reference to field hashCode can't be resolved.
+Reflection warning, perforate/core.clj:13:22 - reference to field hashCode can't be resolved.
+Reflection warning, pjson/parse_bench.clj:13:30 - call to method getBytes can't be resolved (target class is unknown).
+Benchmarking the following goals: 
+json-parse
+Goal:  JSON Parse Benchmark
+-----
+Case:  :boon
+Evaluation count : 11040 in 60 samples of 184 calls.
+             Execution time mean : 5.492969 ms
+    Execution time std-deviation : 46.931192 µs
+   Execution time lower quantile : 5.412315 ms ( 2.5%)
+   Execution time upper quantile : 5.592500 ms (97.5%)
+                   Overhead used : 1.205550 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 3 (5.0000 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+Case:  :pjson-kw
+Evaluation count : 14820 in 60 samples of 247 calls.
+             Execution time mean : 4.059345 ms
+    Execution time std-deviation : 16.864594 µs
+   Execution time lower quantile : 4.032912 ms ( 2.5%)
+   Execution time upper quantile : 4.092957 ms (97.5%)
+                   Overhead used : 1.205550 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+Case:  :clj-json
+Evaluation count : 2820 in 60 samples of 47 calls.
+             Execution time mean : 21.642112 ms
+    Execution time std-deviation : 99.518702 µs
+   Execution time lower quantile : 21.483662 ms ( 2.5%)
+   Execution time upper quantile : 21.876760 ms (97.5%)
+                   Overhead used : 1.205550 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 2 (3.3333 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+Case:  :pjson
+Evaluation count : 13920 in 60 samples of 232 calls.
+             Execution time mean : 4.327364 ms
+    Execution time std-deviation : 29.694623 µs
+   Execution time lower quantile : 4.292041 ms ( 2.5%)
+   Execution time upper quantile : 4.391720 ms (97.5%)
+                   Overhead used : 1.205550 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 2 (3.3333 %)
+	low-mild	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+Case:  :cheshire
+Evaluation count : 3060 in 60 samples of 51 calls.
+             Execution time mean : 19.954405 ms
+    Execution time std-deviation : 126.648886 µs
+   Execution time lower quantile : 19.765849 ms ( 2.5%)
+   Execution time upper quantile : 20.236306 ms (97.5%)
+                   Overhead used : 1.205550 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 2 (3.3333 %)
+	low-mild	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+Case:  :data.json
+Evaluation count : 1140 in 60 samples of 19 calls.
+             Execution time mean : 54.587044 ms
+    Execution time std-deviation : 257.677841 µs
+   Execution time lower quantile : 54.177208 ms ( 2.5%)
+   Execution time upper quantile : 55.082208 ms (97.5%)
+                   Overhead used : 1.205550 ns
+
+
+HEAD
+
+lein perforate                                                               !1545
+======================
+Reflection warning, perforate/core.clj:13:8 - reference to field hashCode can't be resolved.
+Reflection warning, perforate/core.clj:13:22 - reference to field hashCode can't be resolved.
+Reflection warning, pjson/parse_bench.clj:13:30 - call to method getBytes can't be resolved (target class is unknown).
+Benchmarking the following goals: 
+json-parse
+Goal:  JSON Parse Benchmark
+-----
+Case:  :boon
+Evaluation count : 10920 in 60 samples of 182 calls.
+             Execution time mean : 5.535009 ms
+    Execution time std-deviation : 37.371592 µs
+   Execution time lower quantile : 5.460017 ms ( 2.5%)
+   Execution time upper quantile : 5.603452 ms (97.5%)
+                   Overhead used : 1.346021 ns
+
+Case:  :pjson
+Evaluation count : 23940 in 60 samples of 399 calls.
+             Execution time mean : 2.525699 ms
+    Execution time std-deviation : 14.229667 µs
+   Execution time lower quantile : 2.505202 ms ( 2.5%)
+   Execution time upper quantile : 2.554747 ms (97.5%)
+                   Overhead used : 1.346021 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+Case:  :clj-json
+Evaluation count : 2820 in 60 samples of 47 calls.
+             Execution time mean : 21.725602 ms
+    Execution time std-deviation : 108.450502 µs
+   Execution time lower quantile : 21.571274 ms ( 2.5%)
+   Execution time upper quantile : 21.947551 ms (97.5%)
+                   Overhead used : 1.346021 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+Case:  :cheshire
+Evaluation count : 3060 in 60 samples of 51 calls.
+             Execution time mean : 20.054462 ms
+    Execution time std-deviation : 149.477798 µs
+   Execution time lower quantile : 19.841828 ms ( 2.5%)
+   Execution time upper quantile : 20.414547 ms (97.5%)
+                   Overhead used : 1.346021 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 3 (5.0000 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+Case:  :data.json
+Evaluation count : 1140 in 60 samples of 19 calls.
+             Execution time mean : 55.216619 ms
+    Execution time std-deviation : 288.238922 µs
+   Execution time lower quantile : 54.797257 ms ( 2.5%)
+   Execution time upper quantile : 55.872947 ms (97.5%)
+                   Overhead used : 1.346021 ns
