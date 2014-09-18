@@ -3,13 +3,18 @@ package pjson;
 /**
  * Return the JSON data as: Objects == Map, Array == Vector, keys and values as String.
  */
-public final class DefaultListener extends JSONListener{
+public class DefaultListener extends JSONListener{
 
     //private final List<ValueContainer> stack = new ArrayList<ValueContainer>();
     private ValueContainer[] stack = new ValueContainer[10];
     private int stackPointer = 0;
 
-    private ValueContainer current;
+    protected ValueContainer current;
+
+    @Override
+    public void key(String val) {
+        current.append(val);
+    }
 
     @Override
     public final void string(String val) {

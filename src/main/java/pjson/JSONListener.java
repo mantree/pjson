@@ -5,6 +5,7 @@ package pjson;
  */
 public abstract class JSONListener {
 
+    public abstract void key(String str);
     public abstract void string(String str);
     public abstract void number(Integer i);
     public abstract void number(Long i);
@@ -20,4 +21,5 @@ public abstract class JSONListener {
     public abstract void lazyObject(char[] json, int from, int end);
     public abstract void lazyArr(char[] json, int from, int end);
 
+    public abstract Object getValue();
 }

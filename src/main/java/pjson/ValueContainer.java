@@ -1,6 +1,9 @@
 package pjson;
 
 import clojure.lang.PersistentArrayMap;
+import clojure.lang.ITransientMap;
+import clojure.lang.PersistentVector;
+import clojure.lang.ITransientCollection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,20 +20,18 @@ public abstract class ValueContainer {
 
     public static final class ObjectContainer extends ValueContainer{
 
-        private final List<Object> arr = new ArrayList<Object>();
-        private Object[] objs = new Object[10];
         private Object k = null;
+        private ITransientMap v = PersistentArrayMap.EMPTY.asTransient();
 
         @Override
         public void clear(){
-            arr.clear();
+            v = PersistentArrayMap.EMPTY.asTransient();
         }
 
         @Override
         public final void append(Object val) {
             if(k != null) {
-                arr.add(k);
-                arr.add(val);
+                v = v.assoc(k, val);
                 k = null;
             }else
                 k = val;
@@ -38,61 +39,52 @@ public abstract class ValueContainer {
 
         @Override
         public final Object getValue(){
-            return new PersistentArrayMap(objs);
+            return v.persistent();
         }
 
     }
 
     public static final class AssocObjContainer extends ValueContainer{
 
-        private Object[] arr = new Object[20];
-        private int i = 0;
         private Object k = null;
+        private ITransientMap v = PersistentArrayMap.EMPTY.asTransient();
 
         @Override
         public void clear(){
+            v = PersistentArrayMap.EMPTY.asTransient();
         }
 
         @Override
         public final void append(Object val) {
             if(k != null) {
-                if(i+2 > arr.length){
-                    //grow array
-                    Object[] newArr = new Object[arr.length + 10];
-                    System.arraycopy(arr, 0, newArr, 0, i);
-                    arr = newArr;
-                }
-
-                arr[i++] = k;
-                arr[i++] = val;
+                v = v.assoc(k, val);
                 k = null;
-            }else {
+            }else
                 k = val;
-            }
         }
 
         @Override
         public final Object getValue(){
-            return new JSONAssociative(arr, i);
+            return v.persistent();
         }
 
     }
     public static final class ArrayContainer extends ValueContainer{
-        private List<Object> v = new ArrayList<Object>();
+        private ITransientCollection v = PersistentVector.EMPTY.asTransient();
 
         @Override
         public void clear(){
-            v.clear();
+            v = PersistentVector.EMPTY.asTransient();
         }
 
         @Override
         public final void append(Object val) {
-                v.add(val);
+            v = v.conj(val);
         }
 
         @Override
         public final Object getValue() {
-            return new JSONAssociative.JSONVector(v.toArray(), v.size());
+            return v.persistent();
         }
     }
 

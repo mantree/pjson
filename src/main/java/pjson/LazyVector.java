@@ -32,10 +32,10 @@ public class LazyVector extends APersistentVector implements ToJSONString{
         return len;
     }
 
-    private final void realized(){
+    protected void realized(){
         if(!realized.getAndSet(true)){
             DefaultListener listener = new DefaultListener();
-            PJSON.lazyParse(json, from, from+len, listener);
+            PJSON.performLazyParse(json, from, from+len, listener);
             v = (APersistentVector)listener.getValue();
         }
     }

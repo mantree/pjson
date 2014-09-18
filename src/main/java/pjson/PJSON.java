@@ -31,18 +31,24 @@ public final class PJSON {
 
     private static final char STR_COL = ':';
 
-    public static final void parse(final Charset charset, final byte[] bts, final int start, final int len, final JSONListener events){
-        //final char chars[] = StringUtil.decode(bts, start, len);
-
-         final char[] chars = StringUtil.toCharArrayFromBytes(bts, charset, start, len);
-        parse(chars, 0, chars.length, events);
+    public static final Object parse(final Charset charset, final byte[] bts, final int start, final int len, final JSONListener events){
+        final char[] chars = StringUtil.toCharArrayFromBytes(bts, charset, start, len);
+        return parse(chars, 0, chars.length, events);
     }
 
-    public static final void lazyParse(final Charset charset, final byte[] bts, final int start, final int len, final JSONListener events){
-        //final char chars[] = StringUtil.decode(bts, start, len);
-
+    public static final Object lazyParse(final Charset charset, final byte[] bts, final int start, final int len, final JSONListener events){
         final char[] chars = StringUtil.toCharArrayFromBytes(bts, charset, start, len);
-        lazyParse(chars, 0, chars.length, events);
+        return lazyParse(chars, 0, chars.length, events);
+    }
+
+    public static final Object parse(final char[] bts, final int start, final int end, final JSONListener events){
+        performParse(bts, start, end, events);
+        return events.getValue();
+    }
+
+    public static final Object lazyParse(final char[] bts, final int start, final int end, final JSONListener events){
+        performLazyParse(bts, start, end, events);
+        return events.getValue();
     }
 
     /**
@@ -52,7 +58,7 @@ public final class PJSON {
      * @param end the end index
      * @param events JSONListener, all events will be sent to this instance.
      */
-    public static final int parse(final char[] bts, final int start, final int end, final JSONListener events){
+    private static final int performParse(final char[] bts, final int start, final int end, final JSONListener events){
         final int btsLen = end;
         boolean inString = false;
         char bt;
@@ -67,7 +73,7 @@ public final class PJSON {
                 int strStart = CharArrayTool.indexOf(bts, i+1, end, '"') + 1;
                 int idx = CharArrayTool.endOfString(bts, strStart, end);
                 //create string here
-                events.string(StringUtil.fastToString(bts, strStart, idx - strStart));
+                events.key(StringUtil.fastToString(bts, strStart, idx - strStart));
                 idx = CharArrayTool.indexOf(bts, idx+1, end, ':');
                 idx++;
 
@@ -99,12 +105,17 @@ public final class PJSON {
                     }
                     else if(bt == 't' || bt == 'T'){
                         events.number(Boolean.TRUE);
-                        idx += 4;
+                        idx += 3;
                     }else if(bt == 'f' || bt == 'F'){
                         events.number(Boolean.FALSE);
-                        idx += 5;
+                        idx += 4;
                     }else if(bt == '{' || bt == '[') {
-                        idx = parse(bts, idx, btsLen, events);
+                        idx = performParse(bts, idx, btsLen, events);
+                    }else if(bt == ','){
+                        int keyStart = CharArrayTool.indexOf(bts, idx+1, end, '"') + 1;
+                        int keyEnd = CharArrayTool.endOfString(bts, keyStart, end);
+                        events.key(StringUtil.fastToString(bts, keyStart, keyEnd-keyStart));
+                        idx = CharArrayTool.indexOf(bts, idx+1, end, ':');
                     }
 
                 }
@@ -144,16 +155,14 @@ public final class PJSON {
                     }
                     else if(bt == 't' || bt == 'T'){
                         events.number(Boolean.TRUE);
-                        idx += 4;
+                        idx += 3;
                     }else if(bt == 'f' || bt == 'F'){
                         events.number(Boolean.FALSE);
-                        idx += 5;
+                        idx += 4;
                     }else if(bt == '{' || bt == '[') {
-                        idx = parse(bts, idx, btsLen, events);
+                        idx = performParse(bts, idx, btsLen, events);
                     }
-
                 }
-
 
                 return idx;
             }
@@ -169,11 +178,11 @@ public final class PJSON {
      * @param end the end index
      * @param events JSONListener, all events will be sent to this instance.
      */
-    public static final int lazyParse(final char[] bts, final int start, final int end, final JSONListener events){
+    protected static final int performLazyParse(final char[] bts, final int start, final int end, final JSONListener events){
         final int btsLen = end;
         boolean inString = false;
         char bt;
-        int i;
+        int i, endIndex;
 
         for(i = start; i < btsLen; i++){
 
@@ -188,7 +197,7 @@ public final class PJSON {
                     events.objectEnd();
                     return btsLen;
                 }
-                events.string(StringUtil.fastToString(bts, strStart, idx - strStart));
+                events.key(StringUtil.fastToString(bts, strStart, idx - strStart));
                 idx = CharArrayTool.indexOf(bts, idx+1, end, ':');
                 idx++;
 
@@ -196,46 +205,50 @@ public final class PJSON {
                     idx = CharArrayTool.skipWhiteSpace(bts, idx, btsLen);
                     bt = CharArrayTool.getChar(bts, idx);
 
-                    if(bt == '}') {
-                        events.objectEnd();
+                    switch (bt) {
+                        case '}': events.objectEnd();
+                                  break;
+                        case '"': final int strStart2 = idx + 1;
+                                  idx = CharArrayTool.endOfString(bts, strStart2, end);
+                                  events.string(StringUtil.fastToString(bts, strStart2, idx - strStart2));
+                                  break;
+                        case 'n': events.string(null);
+                                  idx += 3;
+                                  break;
+                        case 't':
+                        case 'T': events.number(Boolean.TRUE);
+                                  idx += 3;
+                                  break;
+                        case 'f':
+                        case 'F': events.number(Boolean.FALSE);
+                                  idx += 4;
+                                  break;
+                        case '{': endIndex = CharArrayTool.indexOfEndOfObject(bts, idx+1, btsLen, '{', '}');
+                                  events.lazyObject(bts, idx, endIndex);
+                                  idx = endIndex-1;
+                                  break;
+                        case '[': endIndex = CharArrayTool.indexOfEndOfObject(bts, idx+1, btsLen, '[', ']');
+                                  events.lazyArr(bts, idx, endIndex);
+                                  idx = endIndex-1;
+                                  break;
+                        case ',': int keyStart = CharArrayTool.indexOf(bts, idx+1, end, '"') + 1;
+                                  int keyEnd = CharArrayTool.endOfString(bts, keyStart, end);
+                                  events.key(StringUtil.fastToString(bts, keyStart, keyEnd-keyStart));
+                                  idx = CharArrayTool.indexOf(bts, idx+1, end, ':');
+                                  break;
+                        default:  if(Character.isDigit(bt)) {
+                                      endIndex = CharArrayTool.indexFirstNonNumeric(bts, idx, end);
 
-                    }else if(bt == '"'){
-                        final int strStart2 = idx + 1;
-                        idx = CharArrayTool.endOfString(bts, strStart2, end);
-                        events.string(StringUtil.fastToString(bts, strStart2, idx - strStart2));
-
-                        //add short cut to the next item
-
-                    }else if(Character.isDigit(bt)) {
-                        final int endIndex = CharArrayTool.indexFirstNonNumeric(bts, idx, end);
-
-                        if (bts[endIndex] == '.') {
-                            int idx2 = CharArrayTool.indexFirstNonNumeric(bts, endIndex + 1, end);
-                            parseDouble(bts, idx, idx2, events);
-                            idx = idx2-1;
-                        }else {
-                            parseInt(bts, idx, endIndex, events);
-                            idx = endIndex-1;
+                                      if (bts[endIndex] == '.') {
+                                          int idx2 = CharArrayTool.indexFirstNonNumeric(bts, endIndex + 1, end);
+                                          parseDouble(bts, idx, idx2, events);
+                                          idx = idx2-1;
+                                      }else {
+                                          parseInt(bts, idx, endIndex, events);
+                                          idx = endIndex-1;
+                                      }
+                                  }
                         }
-                    }else if(bt == 'n') {
-                        events.string(null);
-                        idx += 4;
-                    }else if(bt == 't'){
-                        events.number(Boolean.TRUE);
-                        idx += 4;
-                    }else if(bt == 'f'){
-                        events.number(Boolean.FALSE);
-                        idx += 5;
-                    }else if(bt == '{'){
-                        int endIndex = CharArrayTool.indexOfEndOfObject(bts, idx+1, btsLen, '{', '}');
-                        events.lazyObject(bts, idx, endIndex);
-                        idx = endIndex;
-                    }else if(bt == '['){
-                        int endIndex = CharArrayTool.indexOfEndOfObject(bts, idx+1, btsLen, '[', ']');
-                        events.lazyArr(bts, idx, endIndex);
-                        idx = endIndex;
-                    }
-
                 }
 
                 return idx;
@@ -249,46 +262,47 @@ public final class PJSON {
                     idx = CharArrayTool.skipWhiteSpace(bts, idx, btsLen);
                     bt = CharArrayTool.getChar(bts, idx);
 
-                    if(bt == ']') {
-                        events.arrEnd();
-                    }else if(bt == '"'){
-                        final int strStart2 = idx + 1;
-                        idx = CharArrayTool.endOfString(bts, strStart2, end);
-                        events.string(StringUtil.fastToString(bts, strStart2, idx - strStart2));
+                    switch (bt) {
+                        case ']': events.arrEnd();
+                                  break;
+                        case '"': final int strStart2 = idx + 1;
+                                  idx = CharArrayTool.endOfString(bts, strStart2, end);
+                                  events.string(StringUtil.fastToString(bts, strStart2, idx - strStart2));
+                                  break;
+                        case 't': events.number(Boolean.TRUE);
+                                  idx += 3;
+                                  break;
+                        case 'T': events.number(Boolean.TRUE);
+                                  idx += 3;
+                                  break;
+                        case 'f': events.number(Boolean.FALSE);
+                                  idx += 3;
+                                  break;
+                        case 'F': events.number(Boolean.FALSE);
+                                  idx += 3;
+                                  break;
+                        case '{': endIndex = CharArrayTool.indexOfEndOfObject(bts, idx+1, btsLen, '{', '}');
+                                  events.lazyObject(bts, idx, endIndex);
+                                  idx = endIndex;
+                                  break;
+                        case '[': endIndex = CharArrayTool.indexOfEndOfObject(bts, idx+1, btsLen, '[', ']');
+                                  events.lazyArr(bts, idx, endIndex);
+                                  idx = endIndex;
+                                  break;
+                        default: if(Character.isDigit(bt)) {
+                                      endIndex = CharArrayTool.indexFirstNonNumeric(bts, idx, end);
 
-                        //add short cut to the next item
-
-                    }else if(Character.isDigit(bt)) {
-                        final int endIndex = CharArrayTool.indexFirstNonNumeric(bts, idx, end);
-
-                        if (bts[endIndex] == '.') {
-                            int idx2 = CharArrayTool.indexFirstNonNumeric(bts, endIndex + 1, end);
-                            parseDouble(bts, idx, idx2, events);
-                            idx = idx2-1;
-                        }else {
-                            parseInt(bts, idx, endIndex, events);
-                            idx = endIndex-1;
-                        }
+                                      if (bts[endIndex] == '.') {
+                                          int idx2 = CharArrayTool.indexFirstNonNumeric(bts, endIndex + 1, end);
+                                          parseDouble(bts, idx, idx2, events);
+                                          idx = idx2-1;
+                                      }else {
+                                          parseInt(bts, idx, endIndex, events);
+                                          idx = endIndex-1;
+                                      }
+                                  }
                     }
-                    else if(bt == 't' || bt == 'T'){
-                        events.number(Boolean.TRUE);
-                        idx += 4;
-                    }else if(bt == 'f' || bt == 'F'){
-                        events.number(Boolean.FALSE);
-                        idx += 5;
-                    }else if(bt == '{') {
-                        int endIndex = CharArrayTool.indexOfEndOfObject(bts, idx+1, btsLen, '{', '}');
-                        events.lazyObject(bts, idx, endIndex);
-                        idx = endIndex;
-                    }else if(bt == '['){
-                        int endIndex = CharArrayTool.indexOfEndOfObject(bts, idx+1, btsLen, '[', ']');
-                        events.lazyArr(bts, idx, endIndex);
-                        idx = endIndex;
-                    }
-
                 }
-
-
                 return idx;
             }
         }
@@ -307,17 +321,6 @@ public final class PJSON {
     }
 
     /**
-     * Parse the whole byte array bts.
-     * @param bts
-     * @return Object Map or Collection.
-     */
-    public static final Object defaultParse(final Charset charset, final byte[] bts){
-        final DefaultListener list = new DefaultListener();
-        parse(charset, bts, 0, bts.length, list);
-        return list.getValue();
-    }
-
-    /**
      * Parse the bts byte array from offset start and to < len.
      * @param bts
      * @param start
@@ -326,10 +329,17 @@ public final class PJSON {
      */
     public static final Object defaultParse(final Charset charset, final byte[] bts, final int start, final int len){
         final DefaultListener list = new DefaultListener();
-        parse(charset, bts, start, len, list);
-        return list.getValue();
+        return parse(charset, bts, start, len, list);
     }
 
+    /**
+     * Parse the whole byte array bts.
+     * @param bts
+     * @return Object Map or Collection.
+     */
+    public static final Object defaultParse(final Charset charset, final byte[] bts){
+        return defaultParse(charset, bts, 0, bts.length);
+    }
 
     /**
      * Parse the bts byte array from offset start and to < len.
@@ -341,15 +351,13 @@ public final class PJSON {
     public static final Object defaultLazyParse(final Charset charset, final byte[] bts, final int start, final int len){
         final DefaultListener list = new DefaultListener();
         //lazyParse(final char[] bts, final int start, final int end, final JSONListener events
-        lazyParse(charset, bts, start, len, list);
-        return list.getValue();
+        return lazyParse(charset, bts, start, len, list);
     }
 
-    public static final Object defaultLazyParse(final Charset charset, final char[] bts, final int start, final int len){
+    public static final Object defaultLazyParse(final char[] bts, final int start, final int len){
         final DefaultListener list = new DefaultListener();
         //lazyParse(final char[] bts, final int start, final int end, final JSONListener events
-        lazyParse(bts, 0, bts.length, list);
-        return list.getValue();
+        return lazyParse(bts, start, len, list);
     }
 
     /**
@@ -358,7 +366,7 @@ public final class PJSON {
      * @return Object Map or Collection.
      */
     public static final Object defaultLazyParse(final Charset charset, final char[] bts){
-        return defaultLazyParse(charset, bts, 0, bts.length);
+        return defaultLazyParse(bts, 0, bts.length);
     }
 
     /**

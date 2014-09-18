@@ -23,8 +23,19 @@
 
 (deftest test-readmap
   (is (= (read-str "{\"a\": 1, \"b\": 2}") {"a" 1 "b" 2}))
+  (is (= (read-str "{\"a\":true, \"b\": FALSE}") {"a" true "b" false}))
   (is (= (read-str "{\"a\": 1, \"b\": 2, \"c\": {\"d\": 3}}") {"a" 1 "b" 2 "c" {"d" 3}}))
+  (is (= (read-str "{\"a\": 1, \"b\": 2, \"c\": {\"d\": 3},\"d\":{\"e\":4}}") {"a" 1 "b" 2 "c" {"d" 3} "d" {"e" 4}}))
   (is (= (read-str "{\"a\": 1, \"b\": 2, \"c\": {\"d\": [1, 2, 3]}}") {"a" 1 "b" 2 "c" {"d" [1 2 3]}})))
+
+(deftest test-keywordise-keys
+  (is (= (read-str-keywordise "{\"a\": 1, \"b\": 2}") {:a 1 :b 2}))
+  (is (= (read-str-keywordise "{\"a\":true,\"b\":2,\"c\":1.1,\"d\":false}") {:a true :b 2 :c 1.1 :d false}))
+  (is (= (read-str-keywordise "{\"a\": 1, \"b\": 2, \"c\": {\"d\": 3}}") {:a 1 :b 2 :c {:d 3}}))
+  (is (= (read-str-keywordise "{\"a\": 1,\"b\":   2,    \"c\": {\"d\": 3}, \"d\":{\"e\":4}}") {:a 1 :b 2 :c {:d 3} :d {:e 4}}))
+  (is (= (read-str-keywordise "{\"a\": 1, \"b\": 2, \"c\": {\"d\": [1, 2, 3]}}") {:a 1 :b 2 :c {:d [1 2 3]}}))
+  (is (= (read-str-keywordise "{\"a\": 1, \"b\": 2, \"c\": {\"d\": [1, 2, {\"f\":3}], \"e\": 1}}") {:a 1 :b 2 :c {:d [1 2 {:f 3}] :e 1}}))
+  )
 
 
 (deftest test-vector
