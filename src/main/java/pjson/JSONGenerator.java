@@ -58,6 +58,8 @@ public final class JSONGenerator {
                 writer.writeDouble((Double) obj);
             } else if (obj instanceof Float) {
                 writer.writeFloat((Float) obj);
+            } else if (obj instanceof Ratio) {
+                writer.writeDouble(((Ratio) obj).doubleValue());
             } else if (obj instanceof ToJSONString) {
                 ((ToJSONString) obj).toString(writer);
             } else if (obj instanceof PersistentArrayMap) {
